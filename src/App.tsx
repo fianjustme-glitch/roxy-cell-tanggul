@@ -101,10 +101,12 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cashPaid, setCashPaid] = useState<number>(0);
 
-  // Form State
+  // Form States & Refs
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
 
   // Sync Products from Firestore
   useEffect(() => {
@@ -120,10 +122,49 @@ export default function App() {
   }, []);
 
   // AI Actions
+  const analyzeFromURL = async () => {
+    if (!formRef.current) return;
+    const imgInput = formRef.current.querySelector('input[name="image"]') as HTMLInputElement;
+    const url = imgInput?.value;
+
+    if (!url || !url.startsWith('http')) return alert('Masukkan link gambar/produk valid di kolom URL Gambar dulu!');
+
+    setIsAnalyzing(true);
+    try {
+      const resp = await fetch('/api/gemini/analyze-product-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const { data } = await resp.json();
+      
+      if (data) {
+        // Auto-fill form fields
+        const nameInput = formRef.current.querySelector('input[name="name"]') as HTMLInputElement;
+        const priceInput = formRef.current.querySelector('input[name="price"]') as HTMLInputElement;
+        const stockInput = formRef.current.querySelector('input[name="stock"]') as HTMLInputElement;
+        const catInput = formRef.current.querySelector('select[name="category"]') as HTMLSelectElement;
+        const specsInput = formRef.current.querySelector('textarea[name="specs"]') as HTMLTextAreaElement;
+
+        if (data.name) nameInput.value = data.name;
+        if (data.price) priceInput.value = data.price.toString();
+        if (data.stock) stockInput.value = data.stock.toString();
+        if (data.category) catInput.value = data.category;
+        if (data.specs) specsInput.value = data.specs.join(', ');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Gagal menganalisis link. Pastikan link dapat diakses publik.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const generateAIImage = async () => {
-    const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
-    const catInput = document.querySelector('select[name="category"]') as HTMLSelectElement;
-    const imgInput = document.querySelector('input[name="image"]') as HTMLInputElement;
+    if (!formRef.current) return;
+    const nameInput = formRef.current.querySelector('input[name="name"]') as HTMLInputElement;
+    const catInput = formRef.current.querySelector('select[name="category"]') as HTMLSelectElement;
+    const imgInput = formRef.current.querySelector('input[name="image"]') as HTMLInputElement;
 
     if (!nameInput?.value) return alert('Ketik nama produk dulu!');
     
@@ -542,7 +583,7 @@ export default function App() {
                 <h3 className="text-xl font-bold">{editingProduct ? 'Edit Dari Cloud' : 'Tambah Ke Cloud'}</h3>
                 <button onClick={() => setIsFormOpen(false)}><X /></button>
               </div>
-              <form onSubmit={saveProduct} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form ref={formRef} onSubmit={saveProduct} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] font-bold text-gray-500 uppercase">Nama Produk</label>
@@ -559,19 +600,31 @@ export default function App() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">URL Gambar</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">URL Gambar / Link Deteksi</label>
                     <div className="flex gap-2">
-                      <input name="image" defaultValue={editingProduct?.image} className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary" />
+                      <input name="image" defaultValue={editingProduct?.image} className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary" placeholder="Pasti link di sini..." />
+                      <button 
+                        type="button"
+                        disabled={isAnalyzing}
+                        onClick={analyzeFromURL}
+                        className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 text-blue-400 px-3 rounded-xl flex items-center gap-2 transition-all disabled:opacity-50"
+                        title="Deteksi Info Produk dari Link"
+                      >
+                        {isAnalyzing ? <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" /> : <Search className="w-4 h-4" />}
+                        <span className="text-[10px] font-bold uppercase">Detect</span>
+                      </button>
                       <button 
                         type="button"
                         disabled={isGeneratingImage}
                         onClick={generateAIImage}
                         className="bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary px-3 rounded-xl flex items-center gap-2 transition-all disabled:opacity-50"
+                        title="Cari Gambar Otomatis dari Nama"
                       >
                         {isGeneratingImage ? <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" /> : <Zap className="w-4 h-4" />}
-                        <span className="text-[10px] font-bold">AI</span>
+                        <span className="text-[10px] font-bold uppercase">AI</span>
                       </button>
                     </div>
+                    <p className="text-[8px] text-gray-500 mt-1 italic">Pilih Detect untuk isi form dari link, atau AI untuk cari gambar dari nama.</p>
                   </div>
                 </div>
                 <div className="space-y-4">

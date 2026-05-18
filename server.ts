@@ -49,6 +49,52 @@ async function startServer() {
     }
   });
 
+  // API Route to analyze product from URL
+  app.post("/api/gemini/analyze-product-url", async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) return res.status(400).json({ error: "URL required" });
+
+      let contents: any[] = [`Analyze the product at this URL and provide details: ${url}`];
+      let config: any = {
+        tools: [{ urlContext: {} }],
+        responseMimeType: "application/json"
+      };
+
+      // Try to fetch image if it's a direct link
+      try {
+        const fetchResp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const contentType = fetchResp.headers.get('content-type');
+        
+        if (contentType?.startsWith('image/')) {
+          const buffer = await fetchResp.arrayBuffer();
+          const base64 = Buffer.from(buffer).toString('base64');
+          contents = [
+            { text: `Analyze this product image and context from URL: ${url}` },
+            { inlineData: { data: base64, mimeType: contentType } }
+          ];
+        }
+      } catch (e) {
+        console.log("Fetch failed, relying on urlContext only:", e);
+      }
+
+      const result = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents,
+        config: {
+          ...config,
+          systemInstruction: `You are a product analyzer. Provide JSON output with: name, price (estimated in IDR as number), category (hp or ebike), stock (default 5), and specs (list of strings). No extra text.`
+        }
+      });
+
+      const textOutput = result.text || "{}";
+      res.json({ data: JSON.parse(textOutput.replace(/```json|```/g, '').trim()) });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "AI Error", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
