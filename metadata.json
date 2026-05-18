@@ -1,0 +1,8 @@
+{
+  "name": "Roxy Cell Tanggul",
+  "description": "Pusat Jual/Beli Handphone Baru & Bekas Bergaransi & Ritel E-Bike Terbaru di Tanggul.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

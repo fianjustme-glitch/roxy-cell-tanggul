@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;510;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  
+  --color-primary: #dc2626;
+  --color-primary-dark: #991b1b;
+  --color-dark-bg: #0a0a0a;
+  --color-dark-card: #171717;
+}
+
+@layer base {
+  body {
+    @apply bg-dark-bg text-gray-100 font-sans antialiased;
+  }
+}
+
+.glass-nav {
+  @apply sticky top-0 z-50 bg-dark-bg/80 backdrop-blur-md border-b border-white/5;
+}
+
+.product-card {
+  @apply bg-dark-card rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 hover:border-primary/30 hover:translate-y-[-4px];
+}

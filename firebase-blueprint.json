@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Roxy Cell Product model",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "category": { "type": "string", "enum": ["hp", "ebike"] },
+        "type": { "type": "string", "enum": ["baru", "bekas", "ebike"] },
+        "badge": { "type": "string" },
+        "image": { "type": "string" },
+        "specs": { "type": "array", "items": { "type": "string" } },
+        "stock": { "type": "number" }
+      },
+      "required": ["name", "price", "category", "stock"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Sales records for the POS system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "items": { "type": "array" },
+        "total": { "type": "number" },
+        "cashPaid": { "type": "number" },
+        "change": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Collection of products available in the store"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "History of sales transactions"
+    }
+  }
+}
