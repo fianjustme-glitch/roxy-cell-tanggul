@@ -1,0 +1,10 @@
+export const firebaseConfig = {
+  projectId: "amasitech-studio-lomba",
+  appId: "1:862124028121:web:559dff81ad04a4a4978ec8",
+  apiKey: "AIzaSyDo8xckrd7ECQIUck7xRkQJlBBT4PLYmd0",
+  authDomain: "amasitech-studio-lomba.firebaseapp.com",
+  firestoreDatabaseId: "ai-studio-a01e8d18-4343-4ca0-a177-f7677555404b",
+  storageBucket: "amasitech-studio-lomba.firebasestorage.app",
+  messagingSenderId: "862124028121",
+  measurementId: ""
+};

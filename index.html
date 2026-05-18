@@ -4,18 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Roxy Cell Tanggul - HP & E-Bike</title>
-    <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#dc2626" />
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js');
-        });
-      }
-    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="background: #0a0a0a; height: 100vh; display: flex; align-items: center; justify-content: center; color: #dc2626; font-family: sans-serif; font-weight: bold;">
+        MEMUAT ROXY CELL...
+      </div>
+    </div>
     <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
