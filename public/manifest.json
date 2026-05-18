@@ -13,10 +13,10 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "/",
+  "start_url": "./",
   "background_color": "#0a0a0a",
   "display": "standalone",
-  "scope": "/",
+  "scope": "./",
   "theme_color": "#dc2626",
   "description": "Roxy Cell Tanggul - HP & E-Bike Store"
 }
