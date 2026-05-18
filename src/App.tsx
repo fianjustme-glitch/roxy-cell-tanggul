@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 // Firebase Imports
-import { db, auth } from './lib/firebase';
+import { db } from './lib/firebase';
 import { 
   collection, 
   query, 
@@ -39,13 +39,6 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  onAuthStateChanged,
-  signOut,
-  User
-} from 'firebase/auth';
 
 // --- DATA STRUCTURES ---
 
@@ -82,14 +75,13 @@ const handleFirestoreError = (error: unknown, operationType: OperationType, path
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
+      status: 'public'
     },
     operationType,
     path
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  alert(`Error: ${errInfo.error}. Role admin mungkin diperlukan.`);
+  alert(`Error: ${errInfo.error}. Terjadi masalah sinkronisasi.`);
   throw new Error(JSON.stringify(errInfo));
 };
 
@@ -102,7 +94,6 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState<'hp' | 'ebike'>('hp');
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState<User | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   
   // Cart & POS State
@@ -114,13 +105,6 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-
-  // Auth Listener
-  useEffect(() => {
-    return onAuthStateChanged(auth, (u) => {
-      setUser(u);
-    });
-  }, []);
 
   // Sync Products from Firestore
   useEffect(() => {
@@ -175,18 +159,6 @@ export default function App() {
       handleFirestoreError(error, OperationType.UPDATE, 'products/' + id);
     }
   };
-
-  // Auth Actions
-  const login = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const logout = () => signOut(auth);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => 
@@ -320,28 +292,13 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {user ? (
-               <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setIsAdminMode(!isAdminMode)}
-                    className={`p-2 rounded-lg transition-colors ${isAdminMode ? 'bg-primary text-white' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                  >
-                    {isAdminMode ? <Lock className="w-5 h-5" /> : <Edit3 className="w-5 h-5" />}
-                  </button>
-                  <img src={user.photoURL || ''} className="w-8 h-8 rounded-full border border-white/10" />
-                  <button onClick={logout} className="p-2 bg-white/5 rounded-lg text-red-400">
-                    <LogOut className="w-5 h-5" />
-                  </button>
-               </div>
-            ) : (
-              <button 
-                onClick={login}
-                className="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2"
-              >
-                <LogIn className="w-4 h-4" />
-                Login
-              </button>
-            )}
+            <button 
+              onClick={() => setIsAdminMode(!isAdminMode)}
+              className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${isAdminMode ? 'bg-primary text-white' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+            >
+              {isAdminMode ? <Lock className="w-5 h-5" /> : <Edit3 className="w-5 h-5" />}
+              <span className="text-[10px] font-bold hidden md:block">{isAdminMode ? 'MODE USER' : 'MODE ADMIN'}</span>
+            </button>
             <button 
               onClick={() => setIsCartOpen(true)}
               className="p-2 bg-white/5 rounded-lg text-gray-400 hover:text-white relative"
@@ -380,7 +337,7 @@ export default function App() {
           </div>
         </div>
 
-        {isAdminMode && user && (
+        {isAdminMode && (
           <div className="mb-8 flex justify-end">
             <button 
               onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
@@ -416,7 +373,7 @@ export default function App() {
               key={p.id} 
               className="bg-dark-card rounded-2xl border border-white/5 overflow-hidden flex flex-col group relative"
             >
-              {isAdminMode && user && (
+              {isAdminMode && (
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
                   <button 
                     onClick={() => { setEditingProduct(p); setIsFormOpen(true); }}
@@ -470,7 +427,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {isAdminMode && user && (
+                {isAdminMode && (
                   <div className="flex items-center justify-between mb-4 bg-white/5 p-2 rounded-xl border border-white/5">
                     <button onClick={() => updateStock(p.id, -1)} className="p-1 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                     <span className="text-xs font-bold">Stok: {p.stock}</span>
